@@ -70,7 +70,9 @@ export function Calendario(){
   const [date,setDate]=useState(new Date())
   const [sols,setSols]=useState([])
   useEffect(()=>{
+    const hoy=new Date().toISOString().slice(0,10)
     supabase.from('solicitudes').select('*,profiles:emp_id(nombre,color_bg,color_fg)').eq('estado','aprobada')
+      .gte('fin',hoy)
       .then(({data})=>setSols(data||[]))
   },[])
   const year=date.getFullYear(),month=date.getMonth()
