@@ -3,11 +3,13 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { ini, fmtD } from '../lib/helpers'
 import VacCard from '../components/VacCard'
+import Constancia from './Constancia'
 
 export default function MiInfo() {
   const { profile } = useAuth()
   const [solicitudes, setSolicitudes] = useState([])
   const [team, setTeam] = useState([])
+  const [constanciaData, setConstanciaData] = useState(null)
 
   useEffect(() => {
     supabase.from('solicitudes').select('*').eq('emp_id',profile.id).order('created_at',{ascending:false})
@@ -74,9 +76,18 @@ export default function MiInfo() {
               <span style={{color:'#64748b'}}>{fmtD(s.inicio)} → {fmtD(s.fin)}</span>
               <span style={{color:'#94a3b8',fontSize:12}}>{s.tipo} · {s.dias} día(s)</span>
               <span className={ep(s.estado)}>{el(s.estado)}</span>
+              {s.estado==='aprobada'&&(
+                <button className="btn-sm" onClick={() => setConstanciaData({ solicitud: s, colaborador: profile, jefe: null })}>
+                  📄 Constancia
+                </button>
+              )}
             </div>
           ))}
         </div>
+      )}
+
+      {constanciaData && (
+        <Constancia {...constanciaData} onClose={() => setConstanciaData(null)} />
       )}
     </div>
   )

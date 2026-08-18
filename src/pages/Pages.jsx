@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
-import { ini, fmtD } from '../lib/helpers'
+import { ini, fmtD, canSeeRes } from '../lib/helpers'
 
 export function Solicitudes() {
   const { profile } = useAuth()
@@ -67,14 +67,34 @@ const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 export function Calendario(){
+  const { profile } = useAuth()
+  const puedeGestionar = !!profile && canSeeRes(profile)
   const [date,setDate]=useState(new Date())
   const [sols,setSols]=useState([])
-  useEffect(()=>{
+  const [colaboradores,setColaboradores]=useState([])
+  const [modal,setModal]=useState(null)
+  const [empId,setEmpId]=useState('')
+  const [tipoM,setTipoM]=useState('Vacaciones')
+  const [inicioM,setInicioM]=useState('')
+  const [finM,setFinM]=useState('')
+  const [guardando,setGuardando]=useState(false)
+  const [err,setErr]=useState('')
+
+  async function cargarSols(){
     const hoy=new Date().toISOString().slice(0,10)
-    supabase.from('solicitudes').select('*,profiles:emp_id(nombre,color_bg,color_fg)').eq('estado','aprobada')
+    const {data}=await supabase.from('solicitudes').select('*,profiles:emp_id(nombre,color_bg,color_fg)').eq('estado','aprobada')
       .gte('fin',hoy)
-      .then(({data})=>setSols(data||[]))
-  },[])
+    setSols(data||[])
+  }
+  useEffect(()=>{cargarSols()},[])
+
+  useEffect(()=>{
+    if(puedeGestionar){
+      supabase.from('profiles').select('id,nombre').eq('activo',true).order('nombre')
+        .then(({data})=>setColaboradores(data||[]))
+    }
+  },[puedeGestionar])
+
   const year=date.getFullYear(),month=date.getMonth()
   const firstDay=new Date(year,month,1).getDay()
   const daysInMonth=new Date(year,month+1,0).getDate()
@@ -82,6 +102,45 @@ export function Calendario(){
   function getSols(day){
     const d=new Date(year,month,day)
     return sols.filter(s=>{const i=new Date(s.inicio+'T00:00:00'),f=new Date(s.fin+'T00:00:00');return d>=i&&d<=f})
+  }
+
+  function abrirModal(day){
+    if(!puedeGestionar) return
+    const f=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+    setEmpId('');setTipoM('Vacaciones');setInicioM(f);setFinM(f);setErr('')
+    setModal(f)
+  }
+  function cerrarModal(){setModal(null)}
+
+  const diasM = (inicioM&&finM&&finM>=inicioM)
+    ? Math.round((new Date(finM+'T00:00:00')-new Date(inicioM+'T00:00:00'))/(1000*60*60*24))+1
+    : 0
+
+  async function guardarAusencia(){
+    setErr('')
+    if(!empId){setErr('Selecciona un colaborador.');return}
+    if(!inicioM||!finM){setErr('Completa las fechas.');return}
+    if(finM<inicioM){setErr('La fecha de fin debe ser posterior al inicio.');return}
+    setGuardando(true)
+    try{
+      const {error}=await supabase.from('solicitudes').insert({
+        emp_id:empId, tipo:tipoM, inicio:inicioM, fin:finM, dias:diasM,
+        motivo:'Registrado desde calendario', estado:'aprobada', aprobado_por:profile.id
+      })
+      if(error) throw error
+      cerrarModal()
+      cargarSols()
+    }catch(e){
+      setErr('Error al guardar: '+e.message)
+    }finally{setGuardando(false)}
+  }
+
+  async function eliminarAusencia(sol){
+    if(!puedeGestionar) return
+    if(!window.confirm(`¿Eliminar la ausencia de ${sol.profiles?.nombre||'este colaborador'}?`)) return
+    const {error}=await supabase.from('solicitudes').delete().eq('id',sol.id)
+    if(error){ setErr('Error al eliminar: '+error.message); return }
+    cargarSols()
   }
   const ausencias=sols.filter(s=>{
     const i=new Date(s.inicio+'T00:00:00'),f=new Date(s.fin+'T00:00:00')
@@ -105,7 +164,8 @@ export function Calendario(){
             const isToday=today.getDate()===day&&today.getMonth()===month&&today.getFullYear()===year
             const evs=getSols(day)
             return(
-              <div key={day} className={`cc curr${isToday?' today':''}`}>
+              <div key={day} className={`cc curr${isToday?' today':''}`}
+                onClick={()=>abrirModal(day)} style={{cursor:puedeGestionar?'pointer':'default'}}>
                 <div className="cnum">{day}</div>
                 {evs.slice(0,2).map((s,j)=>(
                   <div key={j} className="cev" style={{background:s.profiles?.color_bg,color:s.profiles?.color_fg}}>{ini(s.profiles?.nombre||'?')}</div>
@@ -127,8 +187,45 @@ export function Calendario(){
                 <div style={{fontSize:11,color:'#94a3b8'}}>{fmtD(s.inicio)} → {fmtD(s.fin)} · {s.dias} día(s)</div>
               </div>
               <span style={{fontSize:11,color:'#64748b'}}>{s.tipo}</span>
+              {puedeGestionar&&(
+                <button className="btn-del" style={{marginLeft:8}} onClick={()=>eliminarAusencia(s)}>
+                  <i className="ti ti-trash" style={{fontSize:12}}></i>
+                </button>
+              )}
             </div>
           ))}
+        </div>
+      )}
+      {err&&!modal&&<div className="aerr">{err}</div>}
+      {modal&&puedeGestionar&&(
+        <div className="modal-bg open" onClick={e=>e.target===e.currentTarget&&cerrarModal()}>
+          <div className="modal">
+            <h3>Registrar ausencia <button className="modal-close" onClick={cerrarModal}>×</button></h3>
+            <label className="fl">Colaborador</label>
+            <select className="fi" value={empId} onChange={e=>setEmpId(e.target.value)}>
+              <option value="">-- Seleccionar --</option>
+              {colaboradores.map(c=><option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+            <label className="fl">Tipo de solicitud</label>
+            <select className="fi" value={tipoM} onChange={e=>setTipoM(e.target.value)}>
+              <option>Vacaciones</option>
+              <option>Permiso con goce</option>
+              <option>Permiso sin goce</option>
+              <option>Compensatorio</option>
+            </select>
+            <label className="fl">Fecha de inicio</label>
+            <input type="date" className="fi" value={inicioM} onChange={e=>setInicioM(e.target.value)}/>
+            <label className="fl">Fecha de fin</label>
+            <input type="date" className="fi" value={finM} min={inicioM} onChange={e=>setFinM(e.target.value)}/>
+            <div style={{fontSize:12,color:'#64748b',margin:'6px 0 12px'}}>Días: <strong>{diasM}</strong></div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',flexWrap:'wrap'}}>
+              <button className="btn-sm" onClick={cerrarModal}>Cancelar</button>
+              <button className="btn-p" style={{marginTop:0}} onClick={guardarAusencia} disabled={guardando}>
+                <i className="ti ti-device-floppy" style={{fontSize:14}}></i>{guardando?'Guardando...':'Guardar'}
+              </button>
+            </div>
+            {err&&<div className="aerr">{err}</div>}
+          </div>
         </div>
       )}
     </div>

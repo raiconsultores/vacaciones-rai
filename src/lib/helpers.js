@@ -8,8 +8,8 @@ export const AVS = [
 ]
 export const ini = n => (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
 export const av  = id => AVS[id % AVS.length]
-export const fmtD = d => new Date(d).toLocaleDateString('es-GT',{day:'2-digit',month:'short'})
-export const fmtF = d => new Date(d).toLocaleDateString('es-GT',{day:'2-digit',month:'long',year:'numeric'})
+export const fmtD = d => new Date(d+'T00:00:00').toLocaleDateString('es-GT',{day:'2-digit',month:'short'})
+export const fmtF = d => new Date(d+'T00:00:00').toLocaleDateString('es-GT',{day:'2-digit',month:'long',year:'numeric'})
 
 export function calcAntiguedad(ingresoStr) {
   if (!ingresoStr) return null
