@@ -97,7 +97,7 @@ export default function Solicitar() {
       </select>
       {tipo==='Vacaciones'&&periodosConSaldo.length>1&&(
         <>
-          <label className="fl">¿De qué período deseas tomar los días?</label>
+          <label className="fl">Selecciona el período</label>
           <select className="fi" value={periodoSeleccionado} onChange={e=>setPeriodoSeleccionado(e.target.value)}>
             {periodosConSaldo.map(p=>(
               <option key={p.id} value={p.id}>
