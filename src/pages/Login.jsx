@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import logo from '../assets/logo.png'
 
 export default function Login() {
   const { login } = useAuth()
@@ -37,9 +38,9 @@ export default function Login() {
 
   return (
     <div className="login-wrap">
-      <i className="ti ti-building" style={{fontSize:30,color:'#0070C0',display:'block',textAlign:'center'}}></i>
-      <div className="brand">RAI Consultores</div>
-      <div className="brand-sub">Portal de Vacaciones y Permisos</div>
+      <img src={logo} alt="RAI Consultores" className="login-logo" />
+      <div className="brand-title">Portal de Vacaciones</div>
+      <div className="brand-sub">y Permisos</div>
       <div className="lh2">Ingresa a tu cuenta</div>
       <div className="lf">
         <label>Tu nombre</label>

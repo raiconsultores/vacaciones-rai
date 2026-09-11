@@ -279,7 +279,7 @@ export function Resumen(){
                     </div></td>
                     <td style={{color:'#64748b',fontSize:12}}>{u.puesto}</td>
                     <td style={{color:'#64748b',fontSize:12}}>{u.ingreso}</td>
-                    <td style={{fontWeight:700,color:'#0070C0'}}>{saldo.toFixed(2)}</td>
+                    <td style={{fontWeight:700,color:'#0D4170'}}>{saldo.toFixed(2)}</td>
                     <td>
                       <span className={`pill ${pc}`}>{pill}</span>
                       {venc.length>0&&<span className="pill pill-venc" style={{marginLeft:4}}>{venc.reduce((s,p)=>s+((parseFloat(p.ganados)||0)-(parseFloat(p.usados)||0)),0).toFixed(2)} venc.</span>}
@@ -341,7 +341,7 @@ export function Colaboradores(){
               <div style={{width:36,height:36,borderRadius:'50%',background:u.color_bg,color:u.color_fg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>{ini(u.nombre)}</div>
               <div className="col-info"><div className="col-name">{u.nombre}</div><div className="col-sub">{u.puesto} · {u.depto}</div></div>
               <div style={{textAlign:'right',flexShrink:0,marginRight:10}}>
-                <div style={{fontWeight:700,color:'#0070C0',fontSize:13}}>{saldo.toFixed(2)} días</div>
+                <div style={{fontWeight:700,color:'#0D4170',fontSize:13}}>{saldo.toFixed(2)} días</div>
                 <div style={{fontSize:10,color:'#94a3b8'}}>{(u.periodos_vacaciones||[]).length} períodos</div>
               </div>
               <button className="btn-sm" onClick={()=>abrirEdicion(u)}><i className="ti ti-pencil" style={{fontSize:12}}></i>Editar</button>
@@ -383,7 +383,7 @@ export function Colaboradores(){
                   <div className="pg3" style={{marginTop:6}}>
                     <div><label>Ganados</label><input type="number" className="fi-sm" value={p.ganados||''} step="0.5" min="0" onChange={e=>updPeriodo(i,'ganados',e.target.value)}/></div>
                     <div><label>Usados</label><input type="number" className="fi-sm" value={p.usados||''} step="0.5" min="0" onChange={e=>updPeriodo(i,'usados',e.target.value)}/></div>
-                    <div><label>Saldo</label><input className="fi-sm" readOnly value={ps.toFixed(2)} style={{background:'#f8fafc',color:'#0070C0',fontWeight:700}}/></div>
+                    <div><label>Saldo</label><input className="fi-sm" readOnly value={ps.toFixed(2)} style={{background:'#f8fafc',color:'#0D4170',fontWeight:700}}/></div>
                   </div>
                 </div>
               )

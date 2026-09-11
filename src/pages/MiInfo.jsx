@@ -58,7 +58,7 @@ export default function MiInfo() {
                   </div>
                 </div>
                 <div style={{textAlign:'right',flexShrink:0}}>
-                  <div style={{fontWeight:700,color:'#0070C0'}}>{ms.toFixed(2)} días</div>
+                  <div style={{fontWeight:700,color:'#0D4170'}}>{ms.toFixed(2)} días</div>
                   <span className={`pill ${pc[1]}`} style={{fontSize:10}}>{pc[0]}</span>
                   {venc>0&&<span className="pill pill-venc" style={{fontSize:10,marginLeft:3}}>{venc} venc.</span>}
                 </div>

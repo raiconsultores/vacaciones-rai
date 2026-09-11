@@ -14,7 +14,7 @@ export default function VacCard({ profile }) {
     <div className="card">
       <div className="card-title">Saldo de vacaciones acumulado</div>
       <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:10}}>
-        <span style={{fontSize:40,fontWeight:700,color:'#0070C0'}}>{saldo.toFixed(2)}</span>
+        <span style={{fontSize:40,fontWeight:700,color:'#0D4170'}}>{saldo.toFixed(2)}</span>
         <span style={{fontSize:15,color:'#64748b'}}>días disponibles</span>
         {sv>0 && <span className="pill pill-venc" style={{marginLeft:4}}>{sv.toFixed(2)} vencidos</span>}
       </div>
@@ -46,7 +46,7 @@ export default function VacCard({ profile }) {
                   <span style={{fontSize:13,fontWeight:600}}>{p.anio}</span> {tag}
                   <div style={{fontSize:11,color:'#94a3b8',marginTop:2}}>Ganados: {(parseFloat(p.ganados)||0).toFixed(2)} · Usados: {(parseFloat(p.usados)||0).toFixed(2)}</div>
                 </div>
-                <span style={{fontWeight:700,color:p.vencido&&ps>0?'#6b21a8':'#0070C0',flexShrink:0}}>{ps.toFixed(2)} días</span>
+                <span style={{fontWeight:700,color:p.vencido&&ps>0?'#6b21a8':'#0D4170',flexShrink:0}}>{ps.toFixed(2)} días</span>
               </div>
             )
           })}

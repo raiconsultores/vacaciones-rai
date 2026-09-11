@@ -83,7 +83,7 @@ export default function Solicitar() {
     <div className="card">
       <div className="card-title">Solicitar vacaciones o permiso</div>
       <div style={{fontSize:13,color:'#64748b',marginBottom:4}}>
-        Tienes <strong style={{color:'#0070C0'}}>{saldo.toFixed(2)} días</strong> disponibles.
+        Tienes <strong style={{color:'#0D4170'}}>{saldo.toFixed(2)} días</strong> disponibles.
       </div>
       <div style={{fontSize:12,color:'#94a3b8',marginBottom:'1rem'}}>
         Tu solicitud será enviada a: <strong>{jefe?.nombre||'Administración'}</strong>

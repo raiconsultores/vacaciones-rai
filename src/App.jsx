@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import MiInfo from './pages/MiInfo'
 import Solicitar from './pages/Solicitar'
 import { Solicitudes, Calendario, Resumen, Colaboradores } from './pages/Pages'
+import logo from './assets/logo.png'
 import './styles/global.css'
 
 function Portal() {
@@ -26,7 +27,7 @@ function Portal() {
   return (
     <div>
       <div className="topbar">
-        <div className="tb-brand"><i className="ti ti-building" style={{fontSize:15,marginRight:5,verticalAlign:-2}}></i>RAI Consultores</div>
+        <div className="tb-brand"><img src={logo} alt="RAI Consultores" className="tb-logo" /></div>
         <div className="tb-user">{profile.nombre}</div>
         <button className="btn-out" onClick={logout}><i className="ti ti-logout" style={{fontSize:12,marginRight:3}}></i>Salir</button>
       </div>

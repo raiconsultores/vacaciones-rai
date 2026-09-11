@@ -210,7 +210,7 @@ export default function Constancia({ solicitud, colaborador, jefe, onClose }) {
   return (
     <div className="modal-bg open" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: 460, padding: '2rem', textAlign: 'center' }}>
-        <h3 style={{ marginBottom: '0.5rem', color: '#014BA0' }}>Constancia de Vacaciones</h3>
+        <h3 style={{ marginBottom: '0.5rem', color: '#0D4170' }}>Constancia de Vacaciones</h3>
         <p style={{ fontSize: 13, color: '#555', marginBottom: '1.5rem' }}>
           Se generará el PDF con los datos de la solicitud de <strong>{nombre}</strong>.
         </p>
