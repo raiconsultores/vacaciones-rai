@@ -90,12 +90,12 @@ function ConstanciaPDF({ solicitud, colaborador, jefe }) {
   const nombre     = colaborador?.nombre || ''
   const puesto     = colaborador?.puesto || ''
   const jefNombre  = jefe?.nombre || ''
-  const periodos   = (colaborador?.periodos_vacaciones || []).filter(p => !p.vencido)
-  const periodo    = periodos[0] || {}
+  const periodos   = colaborador?.periodos_vacaciones || []
+  const periodo    = periodos.find(p => p.id === solicitud?.periodo_id) || periodos.find(p => !p.vencido) || {}
   const perIni     = periodo.inicio || ''
   const perFin     = periodo.fin    || ''
   const diasGozar  = solicitud?.dias || 0
-  const saldo      = parseFloat(colaborador?.saldo || 0)
+  const saldo      = parseFloat(periodo.saldo ?? colaborador?.saldo ?? 0)
   const diasPend   = Math.max(0, saldo).toFixed(2)
 
   return (
