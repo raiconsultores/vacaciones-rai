@@ -23,8 +23,20 @@ export function Solicitudes() {
   async function resolver(sol,estado){
     await supabase.from('solicitudes').update({estado,aprobado_por:profile.id}).eq('id',sol.id)
     if(estado==='aprobada'&&sol.tipo==='Vacaciones'){
-      const {data:emp}=await supabase.from('profiles').select('saldo').eq('id',sol.emp_id).single()
-      if(emp) await supabase.from('profiles').update({saldo:Math.max(0,(parseFloat(emp.saldo)||0)-sol.dias)}).eq('id',sol.emp_id)
+      if(sol.periodo_id){
+        const {data:periodo}=await supabase.from('periodos_vacaciones').select('ganados,usados').eq('id',sol.periodo_id).single()
+        if(periodo){
+          const nuevoUsados=(parseFloat(periodo.usados)||0)+sol.dias
+          const nuevoSaldo=Math.max(0,(parseFloat(periodo.ganados)||0)-nuevoUsados)
+          await supabase.from('periodos_vacaciones').update({usados:nuevoUsados,saldo:nuevoSaldo}).eq('id',sol.periodo_id)
+        }
+        const {data:periodos}=await supabase.from('periodos_vacaciones').select('saldo,vencido').eq('user_id',sol.emp_id)
+        const totalSaldo=(periodos||[]).filter(p=>!p.vencido).reduce((s,p)=>s+(parseFloat(p.saldo)||0),0)
+        await supabase.from('profiles').update({saldo:parseFloat(totalSaldo.toFixed(2))}).eq('id',sol.emp_id)
+      }else{
+        const {data:emp}=await supabase.from('profiles').select('saldo').eq('id',sol.emp_id).single()
+        if(emp) await supabase.from('profiles').update({saldo:Math.max(0,(parseFloat(emp.saldo)||0)-sol.dias)}).eq('id',sol.emp_id)
+      }
     }
     cargar()
   }

@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import emailjs from '@emailjs/browser'
 
 const EJSVC  = import.meta.env.VITE_EMAILJS_SERVICE_ID
 const EJSTPL = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+
+const fmtPeriodo = d => d ? new Date(d+'T00:00:00').toLocaleDateString('es-GT',{day:'2-digit',month:'2-digit',year:'numeric'}) : ''
 
 export default function Solicitar() {
   const { profile } = useAuth()
@@ -13,11 +15,27 @@ export default function Solicitar() {
   const [ini, setIni]         = useState('')
   const [fin, setFin]         = useState('')
   const [mot, setMot]         = useState('')
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState('')
   const [ok, setOk]           = useState('')
   const [err, setErr]         = useState('')
   const [loading, setLoading] = useState(false)
   const saldo = parseFloat(profile.saldo)||0
   const today = new Date().toISOString().split('T')[0]
+
+  const periodosConSaldo = useMemo(() =>
+    (profile.periodos_vacaciones||[])
+      .filter(p => (parseFloat(p.saldo)||0) > 0)
+      .sort((a,b) => (a.inicio||'').localeCompare(b.inicio||'')),
+    [profile.periodos_vacaciones]
+  )
+
+  useEffect(()=>{
+    if(tipo!=='Vacaciones'){ setPeriodoSeleccionado(''); return }
+    if(periodosConSaldo.length===1){ setPeriodoSeleccionado(periodosConSaldo[0].id); return }
+    if(!periodosConSaldo.some(p=>p.id===periodoSeleccionado)){
+      setPeriodoSeleccionado(periodosConSaldo[0]?.id || '')
+    }
+  },[tipo, periodosConSaldo])
 
   useEffect(()=>{
     if(profile.jefe_id){
@@ -30,12 +48,14 @@ export default function Solicitar() {
     setOk('');setErr('')
     if(!ini||!fin){setErr('Completa las fechas.');return}
     if(fin<ini){setErr('La fecha de fin debe ser posterior al inicio.');return}
+    if(tipo==='Vacaciones'&&!periodoSeleccionado){setErr('No tienes un período de vacaciones con saldo disponible.');return}
     const d1=new Date(ini+'T00:00:00'),d2=new Date(fin+'T00:00:00')
     const dias=Math.round((d2-d1)/(1000*60*60*24))+1
     setLoading(true)
     try{
       const {error:dbErr}=await supabase.from('solicitudes').insert({
-        emp_id:profile.id, tipo, inicio:ini, fin, dias, motivo:mot||'Sin especificar', estado:'pendiente'
+        emp_id:profile.id, tipo, inicio:ini, fin, dias, motivo:mot||'Sin especificar', estado:'pendiente',
+        periodo_id: tipo==='Vacaciones' ? periodoSeleccionado : null
       })
       if(dbErr) throw dbErr
 
@@ -75,6 +95,18 @@ export default function Solicitar() {
         <option>Permiso sin goce</option>
         <option>Compensatorio</option>
       </select>
+      {tipo==='Vacaciones'&&periodosConSaldo.length>1&&(
+        <>
+          <label className="fl">¿De qué período deseas tomar los días?</label>
+          <select className="fi" value={periodoSeleccionado} onChange={e=>setPeriodoSeleccionado(e.target.value)}>
+            {periodosConSaldo.map(p=>(
+              <option key={p.id} value={p.id}>
+                Del {fmtPeriodo(p.inicio)} al {fmtPeriodo(p.fin)} — Saldo: {(parseFloat(p.saldo)||0).toFixed(2)} días
+              </option>
+            ))}
+          </select>
+        </>
+      )}
       <label className="fl">Fecha de inicio</label>
       <input type="date" className="fi" value={ini} min={today} onChange={e=>setIni(e.target.value)}/>
       <label className="fl">Fecha de fin</label>
