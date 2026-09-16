@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { ini, fmtD, canSeeRes } from '../lib/helpers'
+
+const ep = e => e==='pendiente'?'bp':e==='aprobada'?'ba':'br'
+const el = e => e==='pendiente'?'Pendiente':e==='aprobada'?'Aprobada':'Rechazada'
 
 export function Solicitudes() {
   const { profile } = useAuth()
@@ -247,10 +250,23 @@ export function Calendario(){
 export function Resumen(){
   const [lista,setLista]=useState([])
   const [loading,setLoading]=useState(true)
+  const [historial,setHistorial]=useState([])
+  const [fEmp,setFEmp]=useState('')
+  const [fEstado,setFEstado]=useState('')
+  const [fDesde,setFDesde]=useState('')
+  const [fHasta,setFHasta]=useState('')
   useEffect(()=>{
     supabase.from('profiles').select('*,periodos_vacaciones(*)').eq('activo',true).order('nombre')
       .then(({data})=>{setLista(data||[]);setLoading(false)})
+    supabase.from('solicitudes').select('*,profiles:emp_id(nombre)').order('created_at',{ascending:false})
+      .then(({data})=>setHistorial(data||[]))
   },[])
+  const historialFiltrado=useMemo(()=>historial.filter(s=>
+    (!fEmp||s.emp_id===fEmp) &&
+    (!fEstado||s.estado===fEstado) &&
+    (!fDesde||s.inicio>=fDesde) &&
+    (!fHasta||s.inicio<=fHasta)
+  ),[historial,fEmp,fEstado,fDesde,fHasta])
   if(loading) return <div className="loading"><i className="ti ti-loader-2"></i>Cargando...</div>
   const sinSaldo=lista.filter(u=>(parseFloat(u.saldo)||0)<=0)
   const conVenc=lista.filter(u=>(u.periodos_vacaciones||[]).some(p=>p.vencido&&((parseFloat(p.ganados)||0)-(parseFloat(p.usados)||0))>0))
@@ -287,6 +303,63 @@ export function Resumen(){
                   </tr>
                 )
               })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title">Historial de Solicitudes</div>
+        <div className="pg3">
+          <div>
+            <label className="fl">Colaborador</label>
+            <select className="fi" value={fEmp} onChange={e=>setFEmp(e.target.value)}>
+              <option value="">Todos</option>
+              {lista.map(u=><option key={u.id} value={u.id}>{u.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="fl">Estado</label>
+            <select className="fi" value={fEstado} onChange={e=>setFEstado(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="rechazada">Rechazada</option>
+            </select>
+          </div>
+          <div className="grid2">
+            <div>
+              <label className="fl">Desde</label>
+              <input type="date" className="fi" value={fDesde} onChange={e=>setFDesde(e.target.value)}/>
+            </div>
+            <div>
+              <label className="fl">Hasta</label>
+              <input type="date" className="fi" value={fHasta} min={fDesde||undefined} onChange={e=>setFHasta(e.target.value)}/>
+            </div>
+          </div>
+        </div>
+        <div style={{overflowX:'auto',marginTop:'1rem'}}>
+          <table className="stbl">
+            <thead>
+              <tr>
+                <th>Colaborador</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Días</th><th>Estado</th><th>Solicitado el</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historialFiltrado.map(s=>(
+                <tr key={s.id}>
+                  <td style={{fontWeight:600}}>{s.profiles?.nombre||'—'}</td>
+                  <td style={{color:'#64748b',fontSize:12}}>{s.tipo}</td>
+                  <td style={{fontSize:12}}>{fmtD(s.inicio)}</td>
+                  <td style={{fontSize:12}}>{fmtD(s.fin)}</td>
+                  <td>{s.dias}</td>
+                  <td><span className={ep(s.estado)}>{el(s.estado)}</span></td>
+                  <td style={{color:'#64748b',fontSize:12}}>{new Date(s.created_at).toLocaleDateString('es-GT',{day:'2-digit',month:'short',year:'numeric'})}</td>
+                </tr>
+              ))}
+              {historialFiltrado.length===0&&(
+                <tr><td colSpan={7} style={{textAlign:'center',color:'#94a3b8',padding:'1rem'}}>No hay solicitudes con estos filtros.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
